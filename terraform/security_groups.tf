@@ -38,7 +38,7 @@ resource "aws_vpc_security_group_egress_rule" "public_to_private_ssh" {
 resource "aws_vpc_security_group_ingress_rule" "public_ssh" {
   security_group_id = aws_security_group.public.id
 
-  cidr_ipv4 = var.ssh_allowed_cidr
+  cidr_ipv4   = var.ssh_allowed_cidr
   ip_protocol = "tcp"
   from_port   = 22
   to_port     = 22
