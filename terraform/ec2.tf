@@ -6,7 +6,7 @@ resource "aws_instance" "bastion" {
   ami           = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type = "t3.micro"
 
-  subnet_id                   = aws_subnet.public_a.id
+  subnet_id                   = module.network.public_a_subnet_id
   vpc_security_group_ids      = [aws_security_group.public.id]
   associate_public_ip_address = true
 
@@ -37,7 +37,7 @@ resource "aws_instance" "private" {
   ami           = data.aws_ssm_parameter.ubuntu_ami.value
   instance_type = "t3.micro"
 
-  subnet_id                   = aws_subnet.private_a.id
+  subnet_id                   = module.network.private_a_subnet_id
   vpc_security_group_ids      = [aws_security_group.private.id]
   associate_public_ip_address = false
 

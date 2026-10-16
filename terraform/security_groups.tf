@@ -1,7 +1,7 @@
 resource "aws_security_group" "public" {
   name        = "terraform-public-sg"
   description = "Security group for public EC2"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = module.network.vpc_id
 
   tags = {
     Name = "terraform-public-sg"
@@ -11,7 +11,7 @@ resource "aws_security_group" "public" {
 resource "aws_security_group" "private" {
   name        = "terraform-private-sg"
   description = "Security group for private EC2"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = module.network.vpc_id
 
   tags = {
     Name = "terraform-private-sg"

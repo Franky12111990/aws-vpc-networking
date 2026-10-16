@@ -10,5 +10,5 @@ output "private_ec2_ip" {
 
 output "vpc_id" {
   description = "VPC identifier"
-  value       = aws_vpc.main.id
+  value       = module.network.vpc_id
 }
