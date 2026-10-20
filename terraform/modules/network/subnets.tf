@@ -1,39 +1,40 @@
-resource "aws_subnet" "public_a" {
+locals {
+  subnets = {
+    public_a = {
+      cidr   = var.subnet_cidrs.public_a
+      az     = "us-east-1a"
+      public = true
+    }
+
+    public_b = {
+      cidr   = var.subnet_cidrs.public_b
+      az     = "us-east-1b"
+      public = true
+    }
+
+    private_a = {
+      cidr   = var.subnet_cidrs.private_a
+      az     = "us-east-1a"
+      public = false
+    }
+
+    private_b = {
+      cidr   = var.subnet_cidrs.private_b
+      az     = "us-east-1b"
+      public = false
+    }
+  }
+}
+
+resource "aws_subnet" "this" {
+  for_each = local.subnets
+
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.20.1.0/24"
-  availability_zone       = "us-east-1a"
-  map_public_ip_on_launch = true
-  tags = {
-    Name = "terraform-public-a"
-  }
-}
-
-resource "aws_subnet" "public_b" {
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.20.2.0/24"
-  availability_zone       = "us-east-1b"
-  map_public_ip_on_launch = true
-  tags = {
-    Name = "terraform-public-b"
-  }
-}
-
-resource "aws_subnet" "private_a" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.20.11.0/24"
-  availability_zone = "us-east-1a"
+  cidr_block              = each.value.cidr
+  availability_zone       = each.value.az
+  map_public_ip_on_launch = each.value.public
 
   tags = {
-    Name = "terraform-private-a"
-  }
-}
-
-resource "aws_subnet" "private_b" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.20.12.0/24"
-  availability_zone = "us-east-1b"
-
-  tags = {
-    Name = "terraform-private-b"
+    Name = "terraform-${replace(each.key, "_", "-")}"
   }
 }

@@ -1,6 +1,13 @@
 module "network" {
   source   = "./modules/network"
   vpc_cidr = "10.20.0.0/16"
+
+  subnet_cidrs = {
+    public_a  = "10.20.1.0/24"
+    public_b  = "10.20.2.0/24"
+    private_a = "10.20.11.0/24"
+    private_b = "10.20.12.0/24"
+  }
 }
 
 moved {
