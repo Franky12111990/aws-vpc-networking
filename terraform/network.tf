@@ -13,6 +13,31 @@ module "network" {
     a = "us-east-1a"
     b = "us-east-1b"
   }
+  subnets = {
+    public_a = {
+      cidr   = "10.20.1.0/24"
+      az     = "us-east-1a"
+      public = true
+    }
+
+    public_b = {
+      cidr   = "10.20.2.0/24"
+      az     = "us-east-1b"
+      public = true
+    }
+
+    private_a = {
+      cidr   = "10.20.11.0/24"
+      az     = "us-east-1a"
+      public = false
+    }
+
+    private_b = {
+      cidr   = "10.20.12.0/24"
+      az     = "us-east-1b"
+      public = false
+    }
+  }
 }
 moved {
   from = aws_vpc.main

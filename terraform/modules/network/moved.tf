@@ -17,3 +17,22 @@ moved {
   from = aws_subnet.private_b
   to   = aws_subnet.this["private_b"]
 }
+moved {
+  from = aws_route_table_association.public_a
+  to   = aws_route_table_association.this["public_a"]
+}
+
+moved {
+  from = aws_route_table_association.public_b
+  to   = aws_route_table_association.this["public_b"]
+}
+
+moved {
+  from = aws_route_table_association.private_a
+  to   = aws_route_table_association.this["private_a"]
+}
+
+moved {
+  from = aws_route_table_association.private_b
+  to   = aws_route_table_association.this["private_b"]
+}

@@ -3,18 +3,11 @@ output "vpc_id" {
   value       = aws_vpc.main.id
 }
 
-output "public_a_subnet_id" {
-  value = aws_subnet.this["public_a"].id
-}
+output "subnet_ids" {
+  description = "Subnet IDs indexed by subnet name"
 
-output "public_b_subnet_id" {
-  value = aws_subnet.this["public_b"].id
-}
-
-output "private_a_subnet_id" {
-  value = aws_subnet.this["private_a"].id
-}
-
-output "private_b_subnet_id" {
-  value = aws_subnet.this["private_b"].id
+  value = {
+    for name, subnet in aws_subnet.this :
+    name => subnet.id
+  }
 }

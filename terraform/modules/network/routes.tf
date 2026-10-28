@@ -20,16 +20,6 @@ resource "aws_route" "public_internet" {
   gateway_id             = aws_internet_gateway.main.id
 }
 
-resource "aws_route_table_association" "public_a" {
-  subnet_id      = aws_subnet.this["public_a"].id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "public_b" {
-  subnet_id      = aws_subnet.this["public_b"].id
-  route_table_id = aws_route_table.public.id
-}
-
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
@@ -37,12 +27,14 @@ resource "aws_route_table" "private" {
     Name = "terraform-private-rt"
   }
 }
-resource "aws_route_table_association" "private_a" {
-  subnet_id      = aws_subnet.this["private_a"].id
-  route_table_id = aws_route_table.private.id
-}
+resource "aws_route_table_association" "this" {
+  for_each = local.subnets
 
-resource "aws_route_table_association" "private_b" {
-  subnet_id      = aws_subnet.this["private_b"].id
-  route_table_id = aws_route_table.private.id
+  subnet_id = aws_subnet.this[each.key].id
+
+  route_table_id = (
+    each.value.public
+    ? aws_route_table.public.id
+    : aws_route_table.private.id
+  )
 }
