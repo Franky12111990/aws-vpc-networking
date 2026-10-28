@@ -2,25 +2,25 @@ locals {
   subnets = {
     public_a = {
       cidr   = var.subnet_cidrs.public_a
-      az     = "us-east-1a"
+      az     = var.availability_zones.a
       public = true
     }
 
     public_b = {
       cidr   = var.subnet_cidrs.public_b
-      az     = "us-east-1b"
+      az     = var.availability_zones.b
       public = true
     }
 
     private_a = {
       cidr   = var.subnet_cidrs.private_a
-      az     = "us-east-1a"
+      az     = var.availability_zones.a
       public = false
     }
 
     private_b = {
       cidr   = var.subnet_cidrs.private_b
-      az     = "us-east-1b"
+      az     = var.availability_zones.b
       public = false
     }
   }

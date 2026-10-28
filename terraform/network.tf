@@ -8,8 +8,12 @@ module "network" {
     private_a = "10.20.11.0/24"
     private_b = "10.20.12.0/24"
   }
-}
 
+  availability_zones = {
+    a = "us-east-1a"
+    b = "us-east-1b"
+  }
+}
 moved {
   from = aws_vpc.main
   to   = module.network.aws_vpc.main

@@ -12,3 +12,11 @@ variable "subnet_cidrs" {
     private_b = string
   })
 }
+variable "availability_zones" {
+  description = "Availability Zones for network subnets"
+
+  type = object({
+    a = string
+    b = string
+  })
+}
