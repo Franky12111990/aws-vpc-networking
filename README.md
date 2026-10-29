@@ -281,20 +281,28 @@ chmod 600 ~/.ssh/alex-devops-key.pem
 chmod 600 ~/.ssh/config
 ```
 
+## Terraform: Development Environment
+
+The existing infrastructure is managed with Terraform.
+
+- Root module: `terraform/environments/dev/`
+- Shared network module: `terraform/modules/network/`
+
+Run the following commands from the repository root:
+
+```bash
+cd terraform/environments/dev
+AWS_PROFILE=alex-devops terraform init
+terraform validate
+AWS_PROFILE=alex-devops terraform plan
+```
+
+Terraform state is stored in the existing S3 backend with state locking enabled.
+The local `terraform.tfvars` file is excluded from Git.
+
 ## Next Steps
 
-The next stage of this project is to recreate the infrastructure using Terraform.
-
-Planned resources:
-
-- VPC
-- Public and private subnets
-- Internet Gateway
-- Public and private route tables
-- Security Groups
-- EC2 instances
-- NAT Gateway
-- Elastic IP
-- Terraform variables and outputs
-
-The goal is to move from manual AWS Console configuration to reproducible Infrastructure as Code.
+- Add an S3 Gateway Endpoint for private access to Amazon S3.
+- Configure IAM roles and least-privilege permissions.
+- Introduce separate staging and production environments with independent state.
+- Automate Terraform checks and planning through CI.
