@@ -2,17 +2,6 @@ module "network" {
   source   = "./modules/network"
   vpc_cidr = "10.20.0.0/16"
 
-  subnet_cidrs = {
-    public_a  = "10.20.1.0/24"
-    public_b  = "10.20.2.0/24"
-    private_a = "10.20.11.0/24"
-    private_b = "10.20.12.0/24"
-  }
-
-  availability_zones = {
-    a = "us-east-1a"
-    b = "us-east-1b"
-  }
   subnets = {
     public_a = {
       cidr   = "10.20.1.0/24"
