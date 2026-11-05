@@ -300,9 +300,26 @@ AWS_PROFILE=alex-devops terraform plan
 Terraform state is stored in the existing S3 backend with state locking enabled.
 The local `terraform.tfvars` file is excluded from Git.
 
+## S3 Gateway Endpoint
+
+Private subnets access Amazon S3 in `us-east-1` through a Gateway
+VPC Endpoint associated with the private route table. This connection
+does not require a NAT Gateway or a public IP on the private EC2.
+
+The private EC2 security group has an outbound TCP/443 rule targeting
+the AWS-managed regional S3 prefix list.
+
+Verified from the private EC2:
+- DNS resolution of `s3.us-east-1.amazonaws.com`.
+- HTTPS connectivity to the S3 service endpoint.
+- A HEAD request (`curl -I`) returned `405 Method Not Allowed`
+  with `Allow: GET`. This confirms HTTPS connectivity, but does not
+  verify permissions to read buckets or objects.
+
+General internet access from private subnets remains unavailable.
+
 ## Next Steps
 
-- Add an S3 Gateway Endpoint for private access to Amazon S3.
 - Configure IAM roles and least-privilege permissions.
 - Introduce separate staging and production environments with independent state.
 - Automate Terraform checks and planning through CI.
