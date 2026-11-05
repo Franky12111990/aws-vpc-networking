@@ -11,3 +11,7 @@ output "subnet_ids" {
     name => subnet.id
   }
 }
+output "s3_prefix_list_id" {
+  description = "ID of the AWS-managed prefix list for S3"
+  value       = aws_vpc_endpoint.s3.prefix_list_id
+}

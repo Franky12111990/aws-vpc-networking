@@ -65,3 +65,13 @@ resource "aws_vpc_security_group_egress_rule" "public_https" {
 
   description = "Allow outbound HTTPS"
 }
+resource "aws_vpc_security_group_egress_rule" "private_s3_https" {
+  security_group_id = aws_security_group.private.id
+  prefix_list_id    = module.network.s3_prefix_list_id
+
+  ip_protocol = "tcp"
+  from_port   = 443
+  to_port     = 443
+
+  description = "Allow outbound HTTPS to Amazon S3"
+}
