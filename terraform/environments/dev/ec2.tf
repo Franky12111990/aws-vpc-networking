@@ -43,6 +43,8 @@ resource "aws_instance" "private" {
 
   key_name = "alex-devops-key"
 
+  iam_instance_profile = aws_iam_instance_profile.private_ec2.name
+
   root_block_device {
     volume_size           = 8
     volume_type           = "gp3"
