@@ -1,0 +1,64 @@
+---
+- name: Install AWS CLI on private EC2
+  hosts: private
+  gather_facts: false
+
+  vars:
+    aws_cli_version: "2.39.4"
+    aws_cli_cache_dir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.cache/aws-cli/{{ aws_cli_version }}"
+
+  tasks:
+    - name: Prepare AWS CLI installer on controller
+      delegate_to: localhost
+      run_once: true
+      become: false
+      vars:
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      block:
+        - name: Create AWS CLI cache directory
+          ansible.builtin.file:
+            path: "{{ aws_cli_cache_dir }}"
+            state: directory
+            mode: "0755"
+
+        - name: Download AWS CLI installer
+          ansible.builtin.get_url:
+            url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ aws_cli_version }}.zip"
+            dest: "{{ aws_cli_cache_dir }}/awscliv2.zip"
+            mode: "0644"
+            timeout: 60
+
+        - name: Download AWS CLI signature
+          ansible.builtin.get_url:
+            url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ aws_cli_version }}.zip.sig"
+            dest: "{{ aws_cli_cache_dir }}/awscliv2.zip.sig"
+            mode: "0644"
+            timeout: 60
+
+        - name: Calculate AWS CLI public key checksum
+          ansible.builtin.stat:
+            path: "{{ playbook_dir }}/../files/aws-cli-public-key.asc"
+            checksum_algorithm: sha256
+          register: aws_cli_public_key
+
+        - name: Create AWS CLI verification keyring
+          ansible.builtin.command:
+            argv:
+              - gpg
+              - --batch
+              - --no-options
+              - --dearmor
+              - --output
+              - "{{ aws_cli_cache_dir }}/aws-cli-{{ aws_cli_public_key.stat.checksum }}.gpg"
+              - "{{ playbook_dir }}/../files/aws-cli-public-key.asc"
+            creates: "{{ aws_cli_cache_dir }}/aws-cli-{{ aws_cli_public_key.stat.checksum }}.gpg"
+
+        - name: Verify AWS CLI installer signature
+          ansible.builtin.command:
+            argv:
+              - gpgv
+              - --keyring
+              - "{{ aws_cli_cache_dir }}/aws-cli-{{ aws_cli_public_key.stat.checksum }}.gpg"
+              - "{{ aws_cli_cache_dir }}/awscliv2.zip.sig"
+              - "{{ aws_cli_cache_dir }}/awscliv2.zip"
+          changed_when: false
