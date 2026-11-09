@@ -318,8 +318,36 @@ Verified from the private EC2:
 
 General internet access from private subnets remains unavailable.
 
+## Private EC2 S3 Access
+
+The private EC2 uses the `terraform-dev-private-ec2` IAM role through an instance profile. Its inline policy grants `s3:GetObject` only for `hello.txt` in the application bucket.
+
+The application bucket is separate from the Terraform state bucket. Public access is blocked, and default encryption uses SSE-S3 (`AES256`).
+
+### AWS CLI provisioning
+
+Run from the repository root on the Ansible controller:
+
+```bash
+ansible-playbook ansible/playbooks/aws_cli.yml
+```
+
+The playbook downloads AWS CLI `2.39.4` on the controller, verifies the installer signature using the committed AWS CLI public key, and prepares a transfer archive.
+
+It transfers the installer over SSH through the bastion and installs it on the private EC2. Installation does not require general internet access from the private EC2.
+
+Both EC2 instances must be running, and the controller's SSH configuration must contain the current bastion public IP.
+
+### Verified results
+
+- AWS CLI version `2.39.4` is installed on the private EC2.
+- A repeated playbook run reports `changed=0`.
+- AWS CLI obtains temporary credentials from the EC2 IAM role (`iam-role`).
+- Downloading `hello.txt` succeeds; its contents are `Private EC2 S3 access check.`
+- `ListObjectsV2` returns `AccessDenied` because the role does not allow `s3:ListBucket`.
+- The final Terraform plan proposes no AWS resource changes; only the bastion public IP output differs after an instance restart.
+
 ## Next Steps
 
-- Configure IAM roles and least-privilege permissions.
 - Introduce separate staging and production environments with independent state.
 - Automate Terraform checks and planning through CI.

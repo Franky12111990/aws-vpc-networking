@@ -1,0 +1,144 @@
+---
+- name: Install AWS CLI on private EC2
+  hosts: private
+  gather_facts: false
+
+  vars:
+    aws_cli_version: "2.39.4"
+    aws_cli_cache_dir: "{{ lookup('ansible.builtin.env', 'HOME') }}/.cache/aws-cli/{{ aws_cli_version }}"
+
+  tasks:
+    - name: Prepare AWS CLI installer on controller
+      delegate_to: localhost
+      run_once: true
+      become: false
+      vars:
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      block:
+        - name: Create AWS CLI cache directory
+          ansible.builtin.file:
+            path: "{{ aws_cli_cache_dir }}"
+            state: directory
+            mode: "0755"
+
+        - name: Download AWS CLI installer
+          ansible.builtin.get_url:
+            url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ aws_cli_version }}.zip"
+            dest: "{{ aws_cli_cache_dir }}/awscliv2.zip"
+            mode: "0644"
+            timeout: 60
+
+        - name: Download AWS CLI signature
+          ansible.builtin.get_url:
+            url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-{{ aws_cli_version }}.zip.sig"
+            dest: "{{ aws_cli_cache_dir }}/awscliv2.zip.sig"
+            mode: "0644"
+            timeout: 60
+
+        - name: Calculate AWS CLI public key checksum
+          ansible.builtin.stat:
+            path: "{{ playbook_dir }}/../files/aws-cli-public-key.asc"
+            checksum_algorithm: sha256
+          register: aws_cli_public_key
+
+        - name: Create AWS CLI verification keyring
+          ansible.builtin.command:
+            argv:
+              - gpg
+              - --batch
+              - --no-options
+              - --dearmor
+              - --output
+              - "{{ aws_cli_cache_dir }}/aws-cli-{{ aws_cli_public_key.stat.checksum }}.gpg"
+              - "{{ playbook_dir }}/../files/aws-cli-public-key.asc"
+            creates: "{{ aws_cli_cache_dir }}/aws-cli-{{ aws_cli_public_key.stat.checksum }}.gpg"
+
+        - name: Verify AWS CLI installer signature
+          ansible.builtin.command:
+            argv:
+              - gpgv
+              - --keyring
+              - "{{ aws_cli_cache_dir }}/aws-cli-{{ aws_cli_public_key.stat.checksum }}.gpg"
+              - "{{ aws_cli_cache_dir }}/awscliv2.zip.sig"
+              - "{{ aws_cli_cache_dir }}/awscliv2.zip"
+          changed_when: false
+        - name: Extract AWS CLI installer on controller
+          ansible.builtin.unarchive:
+            src: "{{ aws_cli_cache_dir }}/awscliv2.zip"
+            dest: "{{ aws_cli_cache_dir }}"
+            remote_src: true
+          register: aws_cli_unpack
+
+        - name: Check AWS CLI transfer archive
+          ansible.builtin.stat:
+            path: "{{ aws_cli_cache_dir }}/awscliv2.tar.gz"
+            get_checksum: false
+          register: aws_cli_bundle
+
+        - name: Package AWS CLI installer for transfer
+          ansible.builtin.command:
+            argv:
+              - tar
+              - -czf
+              - "{{ aws_cli_cache_dir }}/awscliv2.tar.gz"
+              - -C
+              - "{{ aws_cli_cache_dir }}"
+              - aws
+          when: aws_cli_unpack.changed or not aws_cli_bundle.stat.exists
+    - name: Check installed AWS CLI version
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/aws
+          - --version
+      register: aws_cli_current
+      changed_when: false
+      failed_when: false
+
+    - name: Install pinned AWS CLI on private EC2
+      become: true
+      vars:
+        aws_cli_remote_dir: "/var/cache/aws-cli/{{ aws_cli_version }}"
+      when: >-
+        aws_cli_current.rc != 0 or
+        not (aws_cli_current.stdout | default('')).startswith('aws-cli/' ~ aws_cli_version ~ ' ')
+      block:
+        - name: Create AWS CLI staging directory
+          ansible.builtin.file:
+            path: "{{ aws_cli_remote_dir }}"
+            state: directory
+            owner: root
+            group: root
+            mode: "0755"
+
+        - name: Transfer and extract AWS CLI installer
+          ansible.builtin.unarchive:
+            src: "{{ aws_cli_cache_dir }}/awscliv2.tar.gz"
+            dest: "{{ aws_cli_remote_dir }}"
+            remote_src: false
+            owner: root
+            group: root
+
+        - name: Run AWS CLI installer
+          ansible.builtin.command:
+            argv:
+              - "{{ aws_cli_remote_dir }}/aws/install"
+              - --install-dir
+              - /usr/local/aws-cli
+              - --bin-dir
+              - /usr/local/bin
+              - --update
+
+    - name: Verify installed AWS CLI version
+      ansible.builtin.command:
+        argv:
+          - /usr/local/bin/aws
+          - --version
+      register: aws_cli_installed
+      changed_when: false
+      failed_when: >-
+        aws_cli_installed.rc != 0 or
+        not (aws_cli_installed.stdout | default('')).startswith('aws-cli/' ~ aws_cli_version ~ ' ')
+
+    - name: Show installed AWS CLI version
+      ansible.builtin.debug:
+        var: aws_cli_installed.stdout
